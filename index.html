@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>源创智慧图册 | INVENTIVE ARCHIVE</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: 欧美先锋排版字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons 图标库 -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans SC"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#F0F7FF',
+              100: '#E0EFFF',
+              200: '#B8DEFF',
+              500: '#0066FF',   // 科技深蓝
+              600: '#0052CC',
+              700: '#003D99',
+              900: '#0A192F',   // 深邃藏青底色
+            },
+            cyanAccent: {
+              400: '#00F2FE',   // 极光青
+              500: '#00C8FF',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* 欧美大字张力水印 */
+    .hero-watermark {
+      font-size: clamp(4rem, 16vw, 15rem);
+      line-height: 0.8;
+      letter-spacing: -0.05em;
+      pointer-events: none;
+      user-select: none;
+    }
+    .glass-nav {
+      backdrop-filter: blur(16px);
+      background-color: rgba(255, 255, 255, 0.82);
+    }
+    /* 平滑过渡 */
+    .card-transition {
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-brand-500 selection:text-white min-h-screen flex flex-col">
+
+  <!-- ================= 顶部全局导航 ================= -->
+  <header class="sticky top-0 z-40 glass-nav border-b border-slate-200/80 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- LOGO 区域（自动兼容本地 logo.png，无图自动显示备用文字标） -->
+      <div class="flex items-center gap-3.5 flex-shrink-0 cursor-pointer" onclick="resetFilters()">
+        <div class="h-10 w-auto max-w-[160px] flex items-center justify-center">
+          <img src="images/logo.png" alt="源创科技" class="h-9 w-auto object-contain" onerror="this.style.display='none'; document.getElementById('fallback-logo').classList.remove('hidden')">
+          <!-- 降级备选 Logo 徽标 -->
+          <div id="fallback-logo" class="hidden flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-cyanAccent-400 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-brand-500/20">
+              Y
+            </div>
+          </div>
+        </div>
+        <div class="border-l border-slate-300 pl-3">
+          <h1 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
+            源创智慧图册
+            <span class="inline-block w-2 h-2 rounded-full bg-cyanAccent-400"></span>
+                </div>
+
+      <!-- 搜索框：一键实时根据关键词过滤图集 -->
+      <div class="flex-1 max-w-md relative hidden md:block">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="搜索型号(PCS)、活动、年份、关键词..." 
+            class="w-full pl-10 pr-10 py-2.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white border border-transparent focus:border-brand-500 rounded-full text-xs font-medium focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all text-slate-700 placeholder-slate-400"
+            oninput="handleSearch()"
+          >
+          <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 统计标签与快捷操作 -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-100 rounded-full text-xs font-semibold text-brand-700">
+          <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+          <span id="assetCount">0 份画册资产</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 移动端搜索框 -->
+    <div class="px-4 pb-3 md:hidden">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+        <input 
+          type="text" 
+          id="mobileSearchInput" 
+          placeholder="搜索关键词..." 
+          class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full text-xs focus:ring-2 focus:ring-brand-500 outline-none"
+          oninput="handleMobileSearch()"
+        >
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 欧美先锋 Hero 横幅 ================= -->
+  <section class="relative overflow-hidden bg-gradient-to-b from-white via-brand-50/30 to-[#F8FAFC] pt-12 pb-8 border-b border-slate-200/60">
+    <!-- 背景大字水印 (Bold Editorial Typography) -->
+    <div class="hero-watermark absolute -bottom-8 right-0 text-slate-900/[0.03] font-extrabold select-none pointer-events-none">
+      YUNTROL
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-[11px] font-semibold tracking-wider uppercase mb-4 shadow-sm">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyanAccent-400"></span>
+        Yuntrol Official Catalog
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight max-w-3xl">
+        源创智控 · <span class="bg-gradient-to-r from-brand-600 via-brand-500 to-cyanAccent-500 bg-clip-text text-transparent">智慧互联图册</span>
+      </h2>
+      <p class="mt-3 text-slate-500 text-sm sm:text-base max-w-2xl font-normal leading-relaxed">
+        收录源创智控软硬件图谱、组织聚力影像及全球市场足迹。
+      </p>
+
+      <!-- ================= 一级主分类 TAB 导航 ================= -->
+      <div class="mt-8 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3" id="primaryCategoryTabs">
+        <!-- JS 动态渲染一级分类 -->
+      </div>
+
+      <!-- ================= 二级子分类 TAB 胶囊 ================= -->
+      <div class="mt-4 flex flex-wrap items-center gap-2" id="secondaryCategoryTabs">
+        <!-- JS 动态联动渲染二级分类 -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 主体相册网格 ================= -->
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+    
+    <!-- 状态指示栏 -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+        <span id="currentFilterLabel">全部作品</span>
+        <span class="text-slate-300">/</span>
+        <span id="itemCountLabel" class="text-brand-600">展示中</span>
+      </div>
+    </div>
+
+    <!-- 瀑布流/网格展示容器 -->
+    <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <!-- 画册卡片通过 JS 渲染 -->
+    </div>
+
+    <!-- 空状态提示 (搜索不到时显示) -->
+    <div id="emptyState" class="hidden text-center py-24">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4">
+        <i data-lucide="image-off" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-lg font-bold text-slate-800">未找到相关画册照片</h3>
+      <p class="text-slate-400 text-xs mt-1">请尝试更换搜索关键词或重置分类筛选</p>
+      <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-brand-600 text-white rounded-lg text-xs font-medium hover:bg-brand-700 transition">
+        重置所有筛选
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ================= 图片大图预览弹窗 (Lightbox) ================= -->
+    <!-- ================= 图片大图预览弹窗 (支持多图与左右翻页) ================= -->
+  <div id="lightbox" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4 select-none" onclick="closeLightbox(event)">
+    <div class="relative max-w-5xl w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800" onclick="event.stopPropagation()">
+      <!-- 关闭按钮 -->
+      <button onclick="closeLightbox(event)" class="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white flex items-center justify-center transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      
+      <div class="flex flex-col lg:flex-row max-h-[85vh]">
+        <!-- 左侧大图展示区（含左右箭头和计数器） -->
+        <div class="relative lg:w-3/4 bg-black flex items-center justify-center p-2 min-h-[360px] max-h-[75vh]">
+          <img id="lightboxImg" src="" alt="" class="max-h-[72vh] max-w-full object-contain transition-all duration-150">
+          
+          <!-- 左翻页按钮 -->
+          <button id="lightboxPrevBtn" onclick="prevLightboxImage(event)" class="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center text-2xl transition shadow-lg">
+            ‹
+          </button>
+
+          <!-- 右翻页按钮 -->
+          <button id="lightboxNextBtn" onclick="nextLightboxImage(event)" class="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md flex items-center justify-center text-2xl transition shadow-lg">
+            ›
+          </button>
+
+          <!-- 计数器（如 1 / 4） -->
+          <div id="lightboxCounter" class="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur text-white text-xs font-mono">
+            1 / 1
+          </div>
+        </div>
+
+        <!-- 右侧信息栏 -->
+        <div class="lg:w-1/4 p-6 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-900 text-white">
+          <div>
+            <span id="lightboxTag" class="inline-block px-2.5 py-1 rounded bg-brand-500/20 text-cyanAccent-400 text-[10px] font-bold uppercase tracking-wider mb-3">TAG</span>
+            <h3 id="lightboxTitle" class="text-lg font-bold text-white mb-2">标题</h3>
+            <p id="lightboxDesc" class="text-xs text-slate-400 leading-relaxed mb-4">描述文字</p>
+            <div class="space-y-2 text-xs text-slate-400">
+              <div class="flex items-center gap-2"><i data-lucide="folder" class="w-3.5 h-3.5 text-brand-400"></i><span id="lightboxCategory">分类</span></div>
+              <div class="flex items-center gap-2"><i data-lucide="calendar" class="w-3.5 h-3.5 text-brand-400"></i><span id="lightboxDate">归档日期</span></div>
+            </div>
+          </div>
+          <div class="pt-6 border-t border-slate-800 mt-6">
+            <a id="lightboxDownloadBtn" href="#" target="_blank" download class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-medium rounded-lg text-center flex items-center justify-center gap-2 transition">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i> 查看当前高清原图
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+                       </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 页脚 ================= -->
+  <footer class="border-t border-slate-200 bg-white py-8 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      <p>© 2026源创智慧图册· 一切版权归浙江源创智控技术有限公司所有</p>
+      <p class="flex items-center gap-1.5">
+  
+      </p>
+    </div>
+  </footer>
+
+  <!-- ================= 核心数据驱动脚本 (修改与扩展都在这里) ================= -->
+  <script>
+    /*
+     * 💡【极为重要】：以后加分类、加内容，只要看这里！
+     * 1. 想加分类：直接在 categories 列表里加。
+     * 2. 想加相片/产品：直接在 galleryItems 列表里复制一项追加。
+     */
+
+    // 1. 分类字典定义 (严格符合你的要求)
+    const categoryConfig = [
+      { id: 'all', name: '全部图集', sub: [] },
+      { 
+        id: 'products', 
+        name: '源创产品图集', 
+        sub: ['全部产品', 'PCS200系列', 'PCS600系列', '硬件系列'] 
+      },
+      { 
+        id: 'culture', 
+        name: '源创聚力影像', 
+        sub: ['全部聚力', '生日会', '活动', '节日'] 
+      },
+      { 
+        id: 'market', 
+        name: '市场活动', 
+        sub: ['全部年份', '2026'] 
+      }
+    ];
+
+    // 2. 照片图集数据库 (支持本地相对路径如 'images/xxx.jpg'，也支持在线图片)
+    const galleryItems = [
+      // ====== 源创产品图集 ======
+      {
+        id: 1,
+        title: "PEC-208-8644",
+        category: "products",
+        subCategory: "PCS200系列",
+        desc: "源创智控分布式核心控制模组。",
+        images: ["images/PEC-208-8644.png","images/PEC-208-8644te.jpg"], // 替换为你自己的 images/xxx.jpg
+        date: "2026-10",
+        tag: "硬件"
+      },
+      {
+        id: 2,
+        title: "AI-8",
+        category: "products",
+        subCategory: "PCS200系列",
+        desc: "BA系统扩展IO模块。",
+        images: ["images/AI-8.png","images/AI-8ce.jpg"],
+        date: "2026-10",
+        tag: "硬件"
+      },
+      {
+        id: 3,
+        title: "AO-8",
+        category: "products",
+        subCategory: "PCS200系列",
+        desc: "BA系统扩展IO模块。",
+       images: ["images/AO-8.png","images/A0-8ce.jpg"],
+        date: "2026-10",
+        tag: "硬件"
+      },
+ {
+        id: 4,
+        title: "DI-16",
+        category: "products",
+        subCategory: "PCS200系列",
+        desc: "BA系统扩展IO模块。",
+       images: ["images/DI-16.png","images/DI-16ce.jpg"],
+        date: "2026-10",
+        tag: "硬件"
+      },
+ {
+        id: 5,
+        title: "DIO-12",
+        category: "products",
+        subCategory: "PCS200系列",
+        desc: "BA系统扩展IO模块。",
+       images: ["images/DIO-12.png","images/DIO-12ce.jpg"],
+        date: "2026-10",
+        tag: "硬件"
+      },
+
+      // ====== 源创聚力影像 ======
+      {
+        id: 6,
+        title: "2026 第三季度员工集体生日会",
+        category: "culture",
+        subCategory: "生日会",
+        desc: "温情源创，感恩同行。",
+       images: ["images/436A2880.jpg","images/436A2903.jpg"],
+        date: "2026-10",
+        tag: "CULTURE"
+      },
+      {
+        id: 7,
+        title: "李家斌读书分享会",
+        category: "culture",
+        subCategory: "读书分享会",
+        desc: "软件研发部李嘉兵带来颠覆认知的著作《与神对话》。",
+        images: ["images/436A1660.jpg","images/436A1577.jpg"],
+        date: "2026-10",
+        tag: "TEAM BUILDING"
+      },
+      
+      // ====== 市场活动 ======
+      {
+        id: 8,
+        title: "2026粤港澳大湾区暖通空调行业年会",
+        category: "market",
+        subCategory: "2026",
+        desc: "直击现场，源创智控亮相2026粤港澳大湾区暖通空调行业年会。",
+        image: "images/PGJ6312.jpg",
+        date: "2026-10",
+        tag: "EXHIBITION 2026"
+      }
+    ];
+
+    // ================= 逻辑控制核心 =================
+        // ================= 逻辑控制核心（支持多图翻页） =================
+    let currentPrimaryCategory = 'all';
+    let currentSecondaryCategory = 'all';
+    let searchQuery = '';
+
+    // 当前弹窗多图状态
+    let currentModalImages = [];
+    let currentModalIdx = 0;
+
+    // 初始化渲染
+    function init() {
+      renderPrimaryTabs();
+      renderSecondaryTabs();
+      renderGallery();
+      lucide.createIcons();
+    }
+
+    // 渲染一级分类
+    function renderPrimaryTabs() {
+      const container = document.getElementById('primaryCategoryTabs');
+      container.innerHTML = categoryConfig.map(cat => {
+        const isActive = currentPrimaryCategory === cat.id;
+        return `
+          <button 
+            onclick="setPrimaryCategory('${cat.id}')"
+            class="px-5 py-2.5 rounded-full text-xs font-bold transition-all ${
+              isActive 
+                ? 'bg-slate-900 text-white shadow-md shadow-slate-900/10' 
+                : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200'
+            }"
+          >
+            ${cat.name}
+          </button>
+        `;
+      }).join('');
+    }
+
+    // 渲染二级子分类胶囊
+    function renderSecondaryTabs() {
+      const container = document.getElementById('secondaryCategoryTabs');
+      const activeCatObj = categoryConfig.find(c => c.id === currentPrimaryCategory);
+
+      if (!activeCatObj || activeCatObj.sub.length === 0) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        return;
+      }
+
+      container.classList.remove('hidden');
+      container.innerHTML = activeCatObj.sub.map((sub, index) => {
+        const isAll = (index === 0 && (currentSecondaryCategory === 'all' || currentSecondaryCategory === sub));
+        const isActive = isAll || currentSecondaryCategory === sub;
+        return `
+          <button 
+            onclick="setSecondaryCategory('${index === 0 ? 'all' : sub}')"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              isActive 
+                ? 'bg-brand-500 text-white shadow-sm' 
+                : 'bg-slate-200/70 text-slate-600 hover:bg-slate-200'
+            }"
+          >
+            ${sub}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function setPrimaryCategory(catId) {
+      currentPrimaryCategory = catId;
+      currentSecondaryCategory = 'all';
+      renderPrimaryTabs();
+      renderSecondaryTabs();
+      renderGallery();
+      lucide.createIcons();
+    }
+
+    function setSecondaryCategory(subName) {
+      currentSecondaryCategory = subName;
+      renderSecondaryTabs();
+      renderGallery();
+      lucide.createIcons();
+    }
+
+    // 渲染相册主体（卡片带张数标签）
+    function renderGallery() {
+      const grid = document.getElementById('galleryGrid');
+      const empty = document.getElementById('emptyState');
+
+      const filtered = galleryItems.filter(item => {
+        const matchPrimary = (currentPrimaryCategory === 'all') || (item.category === currentPrimaryCategory);
+        const matchSecondary = (currentSecondaryCategory === 'all') || (item.subCategory === currentSecondaryCategory);
+        const matchSearch = searchQuery === '' || 
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.subCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.tag.toLowerCase().includes(searchQuery.toLowerCase());
+
+        return matchPrimary && matchSecondary && matchSearch;
+      });
+
+      document.getElementById('assetCount').innerText = `${galleryItems.length} 份画册资产`;
+      document.getElementById('itemCountLabel').innerText = `共显示 ${filtered.length} 项`;
+
+      const primaryName = categoryConfig.find(c => c.id === currentPrimaryCategory)?.name || '全部';
+      const secondaryName = currentSecondaryCategory === 'all' ? '' : ` / ${currentSecondaryCategory}`;
+      document.getElementById('currentFilterLabel').innerText = `${primaryName}${secondaryName}`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.innerHTML = filtered.map(item => {
+        const imgList = item.images || [item.image];
+        const coverImg = imgList[0];
+        const countBadge = imgList.length > 1 
+          ? `<div class="absolute bottom-3 right-3 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur text-white text-[10px] font-medium shadow flex items-center gap-1">
+               <span>📷</span><span>${imgList.length} 张</span>
+             </div>` 
+          : '';
+
+        return `
+          <div 
+            onclick="openLightbox(${item.id})"
+            class="group bg-white rounded-2xl overflow-hidden border border-slate-200/90 hover:border-brand-500/40 shadow-sm hover:shadow-xl hover:-translate-y-1.5 card-transition cursor-pointer flex flex-col"
+          >
+            <div class="relative aspect-[16/10] bg-slate-100 overflow-hidden">
+              <img 
+                src="${coverImg}" 
+                alt="${item.title}" 
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                loading="lazy"
+                onerror="this.src='https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80'"
+              >
+              <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-bold text-white tracking-wider uppercase border border-white/10 flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyanAccent-400"></span>
+                ${item.tag}
+              </div>
+              <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-slate-700 shadow-sm">
+                ${item.subCategory}
+              </div>
+              ${countBadge}
+            </div>
+
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 class="text-base font-bold text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
+                  ${item.title}
+                </h3>
+                <p class="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed font-normal">
+                  ${item.desc}
+                </p>
+              </div>
+              <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <span class="font-medium">${item.date} 归档</span>
+                <span class="font-semibold text-brand-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                  查看细节 →
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 搜索功能
+    function handleSearch() {
+      searchQuery = document.getElementById('searchInput').value.trim();
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (searchQuery.length > 0) clearBtn.classList.remove('hidden');
+      else clearBtn.classList.add('hidden');
+      renderGallery();
+      lucide.createIcons();
+    }
+
+    function handleMobileSearch() {
+      searchQuery = document.getElementById('mobileSearchInput').value.trim();
+      renderGallery();
+      lucide.createIcons();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      searchQuery = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      renderGallery();
+      lucide.createIcons();
+    }
+
+    function resetFilters() {
+      currentPrimaryCategory = 'all';
+      currentSecondaryCategory = 'all';
+      clearSearch();
+      renderPrimaryTabs();
+      renderSecondaryTabs();
+    }
+
+    // 打开大图弹窗
+    function openLightbox(id) {
+      const item = galleryItems.find(i => i.id === id);
+      if (!item) return;
+
+      currentModalImages = item.images || [item.image];
+      currentModalIdx = 0;
+
+      document.getElementById('lightboxTitle').innerText = item.title;
+      document.getElementById('lightboxDesc').innerText = item.desc;
+      document.getElementById('lightboxTag').innerText = item.tag;
+      document.getElementById('lightboxCategory').innerText = item.subCategory;
+      document.getElementById('lightboxDate').innerText = `${item.date} 归档入库`;
+
+      updateLightboxDisplay();
+
+      const lightbox = document.getElementById('lightbox');
+      lightbox.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      lucide.createIcons();
+    }
+
+    // 更新弹窗中的图片和张数
+    function updateLightboxDisplay() {
+      const currentUrl = currentModalImages[currentModalIdx];
+      document.getElementById('lightboxImg').src = currentUrl;
+      document.getElementById('lightboxDownloadBtn').href = currentUrl;
+
+      const prevBtn = document.getElementById('lightboxPrevBtn');
+      const nextBtn = document.getElementById('lightboxNextBtn');
+      const counter = document.getElementById('lightboxCounter');
+
+      if (currentModalImages.length > 1) {
+        prevBtn.style.display = 'flex';
+        nextBtn.style.display = 'flex';
+        counter.style.display = 'block';
+        counter.innerText = `${currentModalIdx + 1} / ${currentModalImages.length}`;
+      } else {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+        counter.style.display = 'none';
+      }
+    }
+
+    // 上一张
+    function prevLightboxImage(e) {
+      if (e) e.stopPropagation();
+      currentModalIdx = (currentModalIdx - 1 + currentModalImages.length) % currentModalImages.length;
+      updateLightboxDisplay();
+    }
+
+    // 下一张
+    function nextLightboxImage(e) {
+      if (e) e.stopPropagation();
+      currentModalIdx = (currentModalIdx + 1) % currentModalImages.length;
+      updateLightboxDisplay();
+    }
+
+    function closeLightbox(event) {
+      document.getElementById('lightbox').classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+
+    // 键盘支持：ESC 退出，左右方向键翻页
+    window.addEventListener('keydown', (e) => {
+      const lightbox = document.getElementById('lightbox');
+      if (!lightbox.classList.contains('hidden')) {
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') prevLightboxImage();
+        if (e.key === 'ArrowRight') nextLightboxImage();
+      }
+    });
+
+    window.onload = init;
+
+  </script>
+</body>
+</html>
