@@ -579,6 +579,14 @@
 
       currentModalImages = item.images || [item.image];
       currentModalIdx = 0;
+      // 在打开弹窗显示当前图片的同时，把该产品的所有其他图片在后台静默预加载
+if (item.images && item.images.length > 1) {
+  item.images.forEach(imgUrl => {
+    const preloadImg = new Image();
+    preloadImg.src = imgUrl; // 浏览器会在后台悄悄下载缓存，点下一张直接秒开！
+  });
+}
+
 
       document.getElementById('lightboxTitle').innerText = item.title;
       document.getElementById('lightboxDesc').innerText = item.desc;
